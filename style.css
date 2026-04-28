@@ -237,3 +237,40 @@ nav .nav-links a {
 nav .nav-links a:hover {
   color: #ecad29;
 }
+
+.toast {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background: #ecad29;
+  color: #fff;
+  padding: 15px 25px;
+  border-radius: 8px;
+  font-weight: 600;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  z-index: 1000;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.details > .cta > .discover {
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.details > .cta > .discover:hover {
+  background-color: #ffffff;
+  color: #1a1a1a;
+}
+
+.details > .cta > .bookmark {
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}

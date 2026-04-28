@@ -378,3 +378,50 @@ async function start() {
 }
 
 start()
+
+// Interactivity Logic
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  if(!toast) return;
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 3000);
+}
+
+// Nav links functionality
+document.querySelectorAll('.nav-links a').forEach(link => {
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    showToast(`Navigating to ${e.target.textContent}...`);
+  });
+});
+
+document.querySelector('.logo').addEventListener('click', (e) => {
+  showToast('Reloading Book Trip...');
+});
+
+// Dynamic buttons functionality
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.discover')) {
+    const activePlace = data[order[0]].place;
+    showToast(`Redirecting to MakeMyTrip for ${activePlace}...`);
+    setTimeout(() => {
+      // Create a search URL on makemytrip based on place (simplified)
+      window.open(`https://www.makemytrip.com/`, '_blank');
+    }, 1500);
+  }
+  
+  if (e.target.closest('.bookmark')) {
+    const btn = e.target.closest('.bookmark');
+    btn.classList.toggle('active');
+    if (btn.classList.contains('active')) {
+      showToast(`Added to your Bookmarks!`);
+      btn.style.backgroundColor = '#d35400';
+    } else {
+      showToast(`Removed from Bookmarks.`);
+      btn.style.backgroundColor = '#ecad29';
+    }
+  }
+});
