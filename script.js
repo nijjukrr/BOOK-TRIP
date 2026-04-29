@@ -379,7 +379,7 @@ async function start() {
 
 start()
 
-// Interactivity Logic
+// Interactivity & Modal Logic
 function showToast(message) {
   const toast = document.getElementById('toast');
   if(!toast) return;
@@ -390,29 +390,185 @@ function showToast(message) {
   }, 3000);
 }
 
+// Modal Elements
+const modalOverlay = document.getElementById('modal-overlay');
+const bookingModal = document.getElementById('booking-modal');
+const successModal = document.getElementById('success-modal');
+const infoModal = document.getElementById('info-modal');
+
+const closeBooking = document.getElementById('close-booking');
+const closeSuccess = document.getElementById('close-success');
+const closeInfo = document.getElementById('close-info');
+
+function openModal(modal) {
+  modalOverlay.classList.add('active');
+  modal.classList.add('active');
+}
+
+function closeAllModals() {
+  modalOverlay.classList.remove('active');
+  bookingModal.classList.remove('active');
+  successModal.classList.remove('active');
+  infoModal.classList.remove('active');
+}
+
+modalOverlay.addEventListener('click', closeAllModals);
+closeBooking.addEventListener('click', closeAllModals);
+closeSuccess.addEventListener('click', closeAllModals);
+closeInfo.addEventListener('click', closeAllModals);
+
+// Mock data for Destinations and Tours
+const mockDestinations = [
+  { name: 'Saint Antönien', img: 'https://assets.codepen.io/3685267/timed-cards-1.jpg', oldPrice: 1200, newPrice: 899, discount: '25% OFF' },
+  { name: 'Nagano Prefecture', img: 'https://assets.codepen.io/3685267/timed-cards-2.jpg', oldPrice: 1500, newPrice: 1199, discount: '20% OFF' },
+  { name: 'Marrakech', img: 'https://assets.codepen.io/3685267/timed-cards-3.jpg', oldPrice: 2000, newPrice: 1499, discount: '25% OFF' },
+  { name: 'Yosemite', img: 'https://assets.codepen.io/3685267/timed-cards-4.jpg', oldPrice: 1000, newPrice: 850, discount: '15% OFF' }
+];
+
+const mockTours = [
+  { name: 'Los Lances Beach', img: 'https://assets.codepen.io/3685267/timed-cards-5.jpg', oldPrice: 800, newPrice: 599, discount: 'Early Bird' },
+  { name: 'Göreme Valley', img: 'https://assets.codepen.io/3685267/timed-cards-6.jpg', oldPrice: 450, newPrice: 350, discount: 'Hot Deal' },
+  { name: 'Swiss Alpine Tour', img: 'https://assets.codepen.io/3685267/timed-cards-1.jpg', oldPrice: 600, newPrice: 499, discount: '15% OFF' }
+];
+
+function generateGrid(items) {
+  return `
+    <div class="dest-grid">
+      ${items.map(item => `
+        <div class="dest-card">
+          <div class="discount-badge">${item.discount}</div>
+          <div class="dest-card-img" style="background-image: url('${item.img}')"></div>
+          <div class="dest-card-body">
+            <div class="dest-card-title">${item.name}</div>
+            <div class="dest-card-price">
+              <span class="price-original">$${item.oldPrice}</span>
+              <span class="price-discounted">$${item.newPrice}</span>
+            </div>
+            <button class="dest-card-btn" onclick="openQuickBook('${item.name}', ${item.newPrice})">Book Deal</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+// Quick book function for grid cards
+window.openQuickBook = function(name, price) {
+  closeAllModals();
+  setTimeout(() => {
+    document.getElementById('booking-dest-name').textContent = name;
+    document.getElementById('booking-form').reset();
+    priceDisplay.textContent = '$' + price;
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('booking-date').setAttribute('min', today);
+    openModal(bookingModal);
+  }, 300);
+};
+
 // Nav links functionality
 document.querySelectorAll('.nav-links a').forEach(link => {
   link.addEventListener('click', (e) => {
     e.preventDefault();
-    showToast(`Navigating to ${e.target.textContent}...`);
+    const section = e.target.textContent;
+    document.getElementById('info-title').textContent = section;
+    
+    let content = '';
+    switch(section.toUpperCase()) {
+      case 'DESTINATIONS':
+        content = '<p style="margin-bottom:15px; color:#ccc;">Explore popular destinations around the globe with exclusive online discounts. Limited time offers!</p>' + generateGrid(mockDestinations);
+        break;
+      case 'TOURS':
+        content = '<p style="margin-bottom:15px; color:#ccc;">Discover curated tour packages. Book now to secure your spot and save big on the price difference.</p>' + generateGrid(mockTours);
+        break;
+      case 'ABOUT':
+        content = `
+          <div class="about-section">
+            <img src="https://assets.codepen.io/3685267/timed-cards-3.jpg" alt="About Us" class="about-banner">
+            <div class="about-text">
+              <h3>Curating Unforgettable Experiences</h3>
+              <p>Book Trip is a premier travel agency dedicated to making luxury travel accessible and seamless. With over 10 years of experience, we handpick the best destinations, ensuring you get premium value at discounted rates.</p>
+              <div class="stats-grid">
+                <div class="stat-box"><strong>50K+</strong><br>Happy Travelers</div>
+                <div class="stat-box"><strong>120+</strong><br>Destinations</div>
+                <div class="stat-box"><strong>24/7</strong><br>Support</div>
+              </div>
+            </div>
+          </div>
+        `;
+        break;
+      case 'CONTACT':
+        content = `
+          <div class="contact-section">
+            <div class="contact-info">
+              <div class="contact-item">
+                <span class="icon">📍</span>
+                <div><strong>Office</strong><br>123 Wanderlust Ave, NY 10001</div>
+              </div>
+              <div class="contact-item">
+                <span class="icon">📞</span>
+                <div><strong>Phone</strong><br>+1 (800) 123-4567</div>
+              </div>
+              <div class="contact-item">
+                <span class="icon">✉️</span>
+                <div><strong>Email</strong><br>hello@booktrip.com</div>
+              </div>
+            </div>
+            <form class="contact-form" onsubmit="event.preventDefault(); showToast('Message Sent Successfully!'); document.getElementById('close-info').click();">
+              <div class="input-group">
+                <input type="text" placeholder="Your Name" required>
+              </div>
+              <div class="input-group">
+                <input type="email" placeholder="Your Email" required>
+              </div>
+              <div class="input-group">
+                <textarea placeholder="How can we help you?" rows="4" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; font-family: Inter;" required></textarea>
+              </div>
+              <button type="submit" class="submit-btn">Send Message</button>
+            </form>
+          </div>
+        `;
+        break;
+      default:
+        content = '<p>Information not available.</p>';
+    }
+    document.getElementById('info-content').innerHTML = content;
+    openModal(infoModal);
   });
 });
 
 document.querySelector('.logo').addEventListener('click', (e) => {
-  showToast('Reloading Book Trip...');
+  window.location.reload();
+});
+
+// Booking Form Logic
+const TICKET_PRICE = 150; // Mock base price
+const ticketsInput = document.getElementById('booking-tickets');
+const priceDisplay = document.getElementById('booking-price');
+
+ticketsInput.addEventListener('input', (e) => {
+  const qty = e.target.value;
+  priceDisplay.textContent = '$' + (qty * TICKET_PRICE);
 });
 
 // Dynamic buttons functionality
 document.addEventListener('click', (e) => {
+  // Open Booking Modal
   if (e.target.closest('.discover')) {
     const activePlace = data[order[0]].place;
-    showToast(`Redirecting to MakeMyTrip for ${activePlace}...`);
-    setTimeout(() => {
-      // Create a search URL on makemytrip based on place (simplified)
-      window.open(`https://www.makemytrip.com/`, '_blank');
-    }, 1500);
+    document.getElementById('booking-dest-name').textContent = activePlace;
+    
+    // Reset form
+    document.getElementById('booking-form').reset();
+    priceDisplay.textContent = '$' + TICKET_PRICE;
+    
+    // Set min date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('booking-date').setAttribute('min', today);
+    
+    openModal(bookingModal);
   }
   
+  // Bookmark Toggle
   if (e.target.closest('.bookmark')) {
     const btn = e.target.closest('.bookmark');
     btn.classList.toggle('active');
@@ -424,4 +580,32 @@ document.addEventListener('click', (e) => {
       btn.style.backgroundColor = '#ecad29';
     }
   }
+});
+
+// Handle Booking Submission
+document.getElementById('booking-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  
+  // Get values
+  const dest = document.getElementById('booking-dest-name').textContent;
+  const date = document.getElementById('booking-date').value;
+  const qty = document.getElementById('booking-tickets').value;
+  const name = document.getElementById('booking-name').value;
+  
+  // Populate Ticket
+  document.getElementById('ticket-id').textContent = '#BT' + Math.floor(Math.random() * 1000000);
+  document.getElementById('ticket-dest').textContent = dest;
+  document.getElementById('ticket-date').textContent = date;
+  document.getElementById('ticket-qty').textContent = qty;
+  document.getElementById('ticket-name').textContent = name;
+  
+  // Transition to Success Modal
+  bookingModal.classList.remove('active');
+  setTimeout(() => {
+    openModal(successModal);
+  }, 300); // Wait for fade out
+});
+
+document.getElementById('download-ticket').addEventListener('click', () => {
+  showToast('Downloading ticket...');
 });

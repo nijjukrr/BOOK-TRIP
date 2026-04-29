@@ -115,6 +115,97 @@
 
     <div class="cover" ></div>
     <div id="toast" class="toast"></div>
+
+    <!-- Modals Overlay -->
+    <div class="modal-overlay" id="modal-overlay"></div>
+
+    <!-- Booking Modal -->
+    <div class="modal" id="booking-modal">
+      <div class="modal-header">
+        <h2 id="booking-title">Book Your Trip</h2>
+        <button class="close-modal" id="close-booking">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="booking-dest" id="booking-dest-name">Destination</div>
+        <form id="booking-form">
+          <div class="input-group">
+            <label for="booking-date">Select Date</label>
+            <input type="date" id="booking-date" required>
+          </div>
+          <div class="input-group">
+            <label for="booking-tickets">Travelers / Tickets</label>
+            <input type="number" id="booking-tickets" min="1" max="10" value="1" required>
+          </div>
+          <div class="input-group">
+            <label for="booking-name">Full Name</label>
+            <input type="text" id="booking-name" placeholder="John Doe" required>
+          </div>
+          <div class="input-group">
+            <label for="booking-email">Email Address</label>
+            <input type="email" id="booking-email" placeholder="john@example.com" required>
+          </div>
+          <div class="input-group">
+            <label for="booking-phone">Phone Number</label>
+            <input type="tel" id="booking-phone" placeholder="+1 234 567 8900" required>
+          </div>
+          <div class="price-summary">
+            <span>Total Amount:</span>
+            <span id="booking-price">$0</span>
+          </div>
+          <button type="submit" class="submit-btn">Confirm Booking</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal" id="success-modal">
+      <div class="modal-header">
+        <h2>Booking Confirmed!</h2>
+        <button class="close-modal" id="close-success">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="ticket">
+          <div class="ticket-header">
+            <h3>BOOK TRIP</h3>
+            <span class="ticket-id" id="ticket-id">#BT123456</span>
+          </div>
+          <div class="ticket-body">
+            <div class="ticket-row">
+              <span class="label">Destination:</span>
+              <span class="value" id="ticket-dest">Switzerland</span>
+            </div>
+            <div class="ticket-row">
+              <span class="label">Date:</span>
+              <span class="value" id="ticket-date">2023-12-01</span>
+            </div>
+            <div class="ticket-row">
+              <span class="label">Travelers:</span>
+              <span class="value" id="ticket-qty">2</span>
+            </div>
+            <div class="ticket-row">
+              <span class="label">Name:</span>
+              <span class="value" id="ticket-name">John Doe</span>
+            </div>
+          </div>
+          <div class="ticket-footer">
+            <div class="barcode">|||| |||||| ||||| || ||||||</div>
+          </div>
+        </div>
+        <button class="submit-btn outline" id="download-ticket">Download Ticket</button>
+      </div>
+    </div>
+
+    <!-- Info Modal -->
+    <div class="modal" id="info-modal" style="max-width: 800px; max-height: 80vh; overflow-y: auto;">
+      <div class="modal-header">
+        <h2 id="info-title">About Us</h2>
+        <button class="close-modal" id="close-info">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="info-content">Information goes here...</div>
+      </div>
+    </div>
+
     <script src='https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js'></script>
     <script src="./script.js"></script>
   </body>
