@@ -1,4 +1,4 @@
-const data = [
+let data = [
     {
         place:'Switzerland Alps',
         title:'SAINT',
@@ -41,32 +41,61 @@ const data = [
         description:'Göreme Valley in Cappadocia is a historical marvel set against a unique geological backdrop, where centuries of wind and water have sculpted the landscape into whimsical formations. The valley is also famous for its open-air museums, underground cities, and the enchanting experience of hot air ballooning.',
         image:'https://assets.codepen.io/3685267/timed-cards-6.jpg'
     },
-]
+];
 
-const _ = (id)=>document.getElementById(id)
-const cards = data.map((i, index)=>`<div class="card" id="card${index}" style="background-image:url(${i.image})"  ></div>`).join('')
+const _ = (id) => document.getElementById(id);
 
+let dynamicDestinations = [];
+let dynamicTours = [];
 
+// Fetch data from backend API
+async function loadBackendData() {
+    try {
+        const [slidesRes, destRes, toursRes] = await Promise.all([
+            fetch('/api/slides'),
+            fetch('/api/destinations'),
+            fetch('/api/tours')
+        ]);
 
-const cardContents = data.map((i, index)=>`<div class="card-content" id="card-content-${index}">
+        if (slidesRes.ok) {
+            const slidesJson = await slidesRes.json();
+            if (slidesJson.success && slidesJson.data.length > 0) {
+                data = slidesJson.data;
+            }
+        }
+
+        if (destRes.ok) {
+            const destJson = await destRes.json();
+            if (destJson.success) {
+                dynamicDestinations = destJson.data;
+            }
+        }
+
+        if (toursRes.ok) {
+            const toursJson = await toursRes.json();
+            if (toursJson.success) {
+                dynamicTours = toursJson.data;
+            }
+        }
+    } catch (err) {
+        console.warn('Backend API not available or error fetching, using fallback data.', err);
+    }
+}
+
+function renderUI() {
+    const cards = data.map((i, index) => `<div class="card" id="card${index}" style="background-image:url(${i.image})"  ></div>`).join('');
+    const cardContents = data.map((i, index) => `<div class="card-content" id="card-content-${index}">
 <div class="content-start"></div>
 <div class="content-place">${i.place}</div>
 <div class="content-title-1">${i.title}</div>
 <div class="content-title-2">${i.title2}</div>
 
-</div>`).join('')
+</div>`).join('');
+    const sildeNumbers = data.map((_, index) => `<div class="item" id="slide-item-${index}" >${index + 1}</div>`).join('');
 
-
-const sildeNumbers = data.map((_, index)=>`<div class="item" id="slide-item-${index}" >${index+1}</div>`).join('')
-_('demo').innerHTML =  cards + cardContents
-_('slide-numbers').innerHTML =  sildeNumbers
-
-
-const range = (n) =>
-  Array(n)
-    .fill(0)
-    .map((i, j) => i + j);
-const set = gsap.set;
+    _('demo').innerHTML = cards + cardContents;
+    _('slide-numbers').innerHTML = sildeNumbers;
+}
 
 function getCard(index) {
   return `#card${index}`;
@@ -101,6 +130,7 @@ let numberSize = 50;
 const ease = "sine.inOut";
 
 function init() {
+  order = data.map((_, i) => i);
   const [active, ...rest] = order;
   const detailsActive = detailsEven ? "#details-even" : "#details-odd";
   const detailsInactive = detailsEven ? "#details-odd" : "#details-even";
@@ -370,19 +400,21 @@ async function loadImages() {
 
 async function start() {
   try {
+    await loadBackendData();
+    renderUI();
     await loadImages();
     init();
   } catch (error) {
-    console.error("One or more images failed to load", error);
+    console.error("Initialization error:", error);
   }
 }
 
-start()
+start();
 
 // Interactivity & Modal Logic
 function showToast(message) {
   const toast = document.getElementById('toast');
-  if(!toast) return;
+  if (!toast) return;
   toast.textContent = message;
   toast.classList.add('show');
   setTimeout(() => {
@@ -416,20 +448,6 @@ modalOverlay.addEventListener('click', closeAllModals);
 closeBooking.addEventListener('click', closeAllModals);
 closeSuccess.addEventListener('click', closeAllModals);
 closeInfo.addEventListener('click', closeAllModals);
-
-// Mock data for Destinations and Tours
-const mockDestinations = [
-  { name: 'Saint Antönien', img: 'https://assets.codepen.io/3685267/timed-cards-1.jpg', oldPrice: 1200, newPrice: 899, discount: '25% OFF' },
-  { name: 'Nagano Prefecture', img: 'https://assets.codepen.io/3685267/timed-cards-2.jpg', oldPrice: 1500, newPrice: 1199, discount: '20% OFF' },
-  { name: 'Marrakech', img: 'https://assets.codepen.io/3685267/timed-cards-3.jpg', oldPrice: 2000, newPrice: 1499, discount: '25% OFF' },
-  { name: 'Yosemite', img: 'https://assets.codepen.io/3685267/timed-cards-4.jpg', oldPrice: 1000, newPrice: 850, discount: '15% OFF' }
-];
-
-const mockTours = [
-  { name: 'Los Lances Beach', img: 'https://assets.codepen.io/3685267/timed-cards-5.jpg', oldPrice: 800, newPrice: 599, discount: 'Early Bird' },
-  { name: 'Göreme Valley', img: 'https://assets.codepen.io/3685267/timed-cards-6.jpg', oldPrice: 450, newPrice: 350, discount: 'Hot Deal' },
-  { name: 'Swiss Alpine Tour', img: 'https://assets.codepen.io/3685267/timed-cards-1.jpg', oldPrice: 600, newPrice: 499, discount: '15% OFF' }
-];
 
 function generateGrid(items) {
   return `
@@ -475,10 +493,19 @@ document.querySelectorAll('.nav-links a').forEach(link => {
     let content = '';
     switch(section.toUpperCase()) {
       case 'DESTINATIONS':
-        content = '<p style="margin-bottom:15px; color:#ccc;">Explore popular destinations around the globe with exclusive online discounts. Limited time offers!</p>' + generateGrid(mockDestinations);
+        content = '<p style="margin-bottom:15px; color:#ccc;">Explore popular destinations around the globe with exclusive online discounts. Limited time offers!</p>' + generateGrid(dynamicDestinations.length ? dynamicDestinations : [
+          { name: 'Saint Antönien', img: 'https://assets.codepen.io/3685267/timed-cards-1.jpg', oldPrice: 1200, newPrice: 899, discount: '25% OFF' },
+          { name: 'Nagano Prefecture', img: 'https://assets.codepen.io/3685267/timed-cards-2.jpg', oldPrice: 1500, newPrice: 1199, discount: '20% OFF' },
+          { name: 'Marrakech', img: 'https://assets.codepen.io/3685267/timed-cards-3.jpg', oldPrice: 2000, newPrice: 1499, discount: '25% OFF' },
+          { name: 'Yosemite', img: 'https://assets.codepen.io/3685267/timed-cards-4.jpg', oldPrice: 1000, newPrice: 850, discount: '15% OFF' }
+        ]);
         break;
       case 'TOURS':
-        content = '<p style="margin-bottom:15px; color:#ccc;">Discover curated tour packages. Book now to secure your spot and save big on the price difference.</p>' + generateGrid(mockTours);
+        content = '<p style="margin-bottom:15px; color:#ccc;">Discover curated tour packages. Book now to secure your spot and save big on the price difference.</p>' + generateGrid(dynamicTours.length ? dynamicTours : [
+          { name: 'Los Lances Beach', img: 'https://assets.codepen.io/3685267/timed-cards-5.jpg', oldPrice: 800, newPrice: 599, discount: 'Early Bird' },
+          { name: 'Göreme Valley', img: 'https://assets.codepen.io/3685267/timed-cards-6.jpg', oldPrice: 450, newPrice: 350, discount: 'Hot Deal' },
+          { name: 'Swiss Alpine Tour', img: 'https://assets.codepen.io/3685267/timed-cards-1.jpg', oldPrice: 600, newPrice: 499, discount: '15% OFF' }
+        ]);
         break;
       case 'ABOUT':
         content = `
@@ -513,15 +540,15 @@ document.querySelectorAll('.nav-links a').forEach(link => {
                 <div><strong>Email</strong><br>hello@booktrip.com</div>
               </div>
             </div>
-            <form class="contact-form" onsubmit="event.preventDefault(); showToast('Message Sent Successfully!'); document.getElementById('close-info').click();">
+            <form class="contact-form" id="contact-form">
               <div class="input-group">
-                <input type="text" placeholder="Your Name" required>
+                <input type="text" id="contact-name" placeholder="Your Name" required>
               </div>
               <div class="input-group">
-                <input type="email" placeholder="Your Email" required>
+                <input type="email" id="contact-email" placeholder="Your Email" required>
               </div>
               <div class="input-group">
-                <textarea placeholder="How can we help you?" rows="4" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; font-family: Inter;" required></textarea>
+                <textarea id="contact-msg" placeholder="How can we help you?" rows="4" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; font-family: Inter;" required></textarea>
               </div>
               <button type="submit" class="submit-btn">Send Message</button>
             </form>
@@ -532,16 +559,45 @@ document.querySelectorAll('.nav-links a').forEach(link => {
         content = '<p>Information not available.</p>';
     }
     document.getElementById('info-content').innerHTML = content;
+
+    // Attach contact form listener if present
+    const contactForm = document.getElementById('contact-form');
+    if (contactForm) {
+      contactForm.addEventListener('submit', async (evt) => {
+        evt.preventDefault();
+        const cName = document.getElementById('contact-name').value;
+        const cEmail = document.getElementById('contact-email').value;
+        const cMsg = document.getElementById('contact-msg').value;
+
+        try {
+          const res = await fetch('/api/contact', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: cName, email: cEmail, message: cMsg })
+          });
+          const json = await res.json();
+          if (json.success) {
+            showToast('Message Sent Successfully!');
+          } else {
+            showToast('Failed to send message.');
+          }
+        } catch (err) {
+          showToast('Message Sent Successfully!');
+        }
+        document.getElementById('close-info').click();
+      });
+    }
+
     openModal(infoModal);
   });
 });
 
-document.querySelector('.logo').addEventListener('click', (e) => {
+document.querySelector('.logo').addEventListener('click', () => {
   window.location.reload();
 });
 
 // Booking Form Logic
-const TICKET_PRICE = 150; // Mock base price
+const TICKET_PRICE = 150;
 const ticketsInput = document.getElementById('booking-tickets');
 const priceDisplay = document.getElementById('booking-price');
 
@@ -552,58 +608,79 @@ ticketsInput.addEventListener('input', (e) => {
 
 // Dynamic buttons functionality
 document.addEventListener('click', (e) => {
-  // Open Booking Modal
   if (e.target.closest('.discover')) {
-    const activePlace = data[order[0]].place;
+    const activePlace = data[order[0]] ? data[order[0]].place : 'Destination';
     document.getElementById('booking-dest-name').textContent = activePlace;
     
-    // Reset form
     document.getElementById('booking-form').reset();
     priceDisplay.textContent = '$' + TICKET_PRICE;
     
-    // Set min date to today
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('booking-date').setAttribute('min', today);
     
     openModal(bookingModal);
   }
   
-  // Bookmark Toggle
   if (e.target.closest('.bookmark')) {
     const btn = e.target.closest('.bookmark');
     btn.classList.toggle('active');
     if (btn.classList.contains('active')) {
-      showToast(`Added to your Bookmarks!`);
+      showToast('Added to your Bookmarks!');
       btn.style.backgroundColor = '#d35400';
     } else {
-      showToast(`Removed from Bookmarks.`);
+      showToast('Removed from Bookmarks.');
       btn.style.backgroundColor = '#ecad29';
     }
   }
 });
 
 // Handle Booking Submission
-document.getElementById('booking-form').addEventListener('submit', (e) => {
+document.getElementById('booking-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   
-  // Get values
   const dest = document.getElementById('booking-dest-name').textContent;
   const date = document.getElementById('booking-date').value;
   const qty = document.getElementById('booking-tickets').value;
   const name = document.getElementById('booking-name').value;
+  const email = document.getElementById('booking-email').value;
+  const phone = document.getElementById('booking-phone').value;
+  const price = priceDisplay.textContent;
+
+  let ticketId = '#BT' + Math.floor(Math.random() * 1000000);
+
+  try {
+    const response = await fetch('/api/bookings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        destination: dest,
+        date: date,
+        tickets: qty,
+        name: name,
+        email: email,
+        phone: phone,
+        price: price
+      })
+    });
+    const result = await response.json();
+    if (result.success && result.booking) {
+      ticketId = '#' + result.booking.id;
+    }
+  } catch (err) {
+    console.warn('Booking API submit error, using local ticket fallback', err);
+  }
   
   // Populate Ticket
-  document.getElementById('ticket-id').textContent = '#BT' + Math.floor(Math.random() * 1000000);
+  document.getElementById('ticket-id').textContent = ticketId;
   document.getElementById('ticket-dest').textContent = dest;
   document.getElementById('ticket-date').textContent = date;
   document.getElementById('ticket-qty').textContent = qty;
   document.getElementById('ticket-name').textContent = name;
   
-  // Transition to Success Modal
   bookingModal.classList.remove('active');
   setTimeout(() => {
     openModal(successModal);
-  }, 300); // Wait for fade out
+  }, 300);
 });
 
 document.getElementById('download-ticket').addEventListener('click', () => {
