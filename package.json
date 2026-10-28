@@ -1,0 +1,14 @@
+{
+  "name": "book-trip",
+  "version": "1.0.0",
+  "description": "Book Trip - Full stack interactive travel booking application",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test test.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  }
+}
