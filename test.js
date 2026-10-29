@@ -86,6 +86,14 @@ test('POST /api/bookings validates missing parameters', async () => {
   assert.strictEqual(json.success, false);
 });
 
+test('GET /api/bookings/:id returns 404 for non-existent booking', async () => {
+  const res = await fetch(`${baseUrl}/api/bookings/BT99999999`);
+  assert.strictEqual(res.status, 404);
+  const json = await res.json();
+  assert.strictEqual(json.success, false);
+  assert.strictEqual(json.message, 'Booking not found.');
+});
+
 test('POST /api/contact records contact message', async () => {
   const contactData = {
     name: 'Bob Johnson',
@@ -104,6 +112,18 @@ test('POST /api/contact records contact message', async () => {
   assert.strictEqual(json.success, true);
   assert.ok(json.contact.id);
   assert.strictEqual(json.contact.name, 'Bob Johnson');
+});
+
+test('POST /api/contact validates missing contact fields', async () => {
+  const res = await fetch(`${baseUrl}/api/contact`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: 'Bob' })
+  });
+
+  assert.strictEqual(res.status, 400);
+  const json = await res.json();
+  assert.strictEqual(json.success, false);
 });
 
 test('Static files serving (index.html)', async () => {

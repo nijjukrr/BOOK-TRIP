@@ -385,10 +385,10 @@ async function loop() {
 }
 
 async function loadImage(src) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     let img = new Image();
     img.onload = () => resolve(img);
-    img.onerror = reject;
+    img.onerror = () => resolve(null);
     img.src = src;
   });
 }
@@ -470,13 +470,17 @@ function generateGrid(items) {
   `;
 }
 
+// Dynamic ticket unit price state
+let currentUnitPrice = 150;
+
 // Quick book function for grid cards
 window.openQuickBook = function(name, price) {
   closeAllModals();
   setTimeout(() => {
+    currentUnitPrice = Number(price) || 150;
     document.getElementById('booking-dest-name').textContent = name;
     document.getElementById('booking-form').reset();
-    priceDisplay.textContent = '$' + price;
+    priceDisplay.textContent = '$' + currentUnitPrice;
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('booking-date').setAttribute('min', today);
     openModal(bookingModal);
@@ -579,10 +583,10 @@ document.querySelectorAll('.nav-links a').forEach(link => {
           if (json.success) {
             showToast('Message Sent Successfully!');
           } else {
-            showToast('Failed to send message.');
+            showToast(json.message || 'Failed to send message.');
           }
         } catch (err) {
-          showToast('Message Sent Successfully!');
+          showToast('Failed to send message. Please try again.');
         }
         document.getElementById('close-info').click();
       });
@@ -597,23 +601,25 @@ document.querySelector('.logo').addEventListener('click', () => {
 });
 
 // Booking Form Logic
-const TICKET_PRICE = 150;
 const ticketsInput = document.getElementById('booking-tickets');
 const priceDisplay = document.getElementById('booking-price');
 
 ticketsInput.addEventListener('input', (e) => {
-  const qty = e.target.value;
-  priceDisplay.textContent = '$' + (qty * TICKET_PRICE);
+  const qty = Math.max(1, Number(e.target.value) || 1);
+  priceDisplay.textContent = '$' + (qty * currentUnitPrice);
 });
 
 // Dynamic buttons functionality
 document.addEventListener('click', (e) => {
   if (e.target.closest('.discover')) {
-    const activePlace = data[order[0]] ? data[order[0]].place : 'Destination';
+    const activeItem = data[order[0]];
+    const activePlace = activeItem ? activeItem.place : 'Destination';
+    currentUnitPrice = activeItem && activeItem.basePrice ? activeItem.basePrice : 150;
+
     document.getElementById('booking-dest-name').textContent = activePlace;
     
     document.getElementById('booking-form').reset();
-    priceDisplay.textContent = '$' + TICKET_PRICE;
+    priceDisplay.textContent = '$' + currentUnitPrice;
     
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('booking-date').setAttribute('min', today);
@@ -685,4 +691,32 @@ document.getElementById('booking-form').addEventListener('submit', async (e) => 
 
 document.getElementById('download-ticket').addEventListener('click', () => {
   showToast('Downloading ticket...');
+
+  const ticketId = document.getElementById('ticket-id').textContent;
+  const dest = document.getElementById('ticket-dest').textContent;
+  const date = document.getElementById('ticket-date').textContent;
+  const qty = document.getElementById('ticket-qty').textContent;
+  const name = document.getElementById('ticket-name').textContent;
+
+  const ticketContent = `====================================
+BOOK TRIP - TRAVEL TICKET
+====================================
+Ticket ID   : ${ticketId}
+Passenger   : ${name}
+Destination : ${dest}
+Travel Date : ${date}
+Travelers   : ${qty}
+====================================
+Thank you for booking with Book Trip!
+`;
+
+  const blob = new Blob([ticketContent], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Ticket_${ticketId.replace('#', '')}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 });
