@@ -379,7 +379,7 @@ function step(direction = "next") {
 async function loop() {
   await animate(".indicator", 0.5, { x: 0 });
   await animate(".indicator", 0.4, { x: window.innerWidth, delay: 0.3 });
-  set(".indicator", { x: -window.innerWidth });
+  gsap.set(".indicator", { x: -window.innerWidth });
   await step();
   loop();
 }
@@ -474,9 +474,11 @@ function generateGrid(items) {
 window.openQuickBook = function(name, price) {
   closeAllModals();
   setTimeout(() => {
+    currentUnitTicketPrice = Number(price) || DEFAULT_TICKET_PRICE;
     document.getElementById('booking-dest-name').textContent = name;
     document.getElementById('booking-form').reset();
-    priceDisplay.textContent = '$' + price;
+    document.getElementById('booking-tickets').value = 1;
+    priceDisplay.textContent = '$' + currentUnitTicketPrice;
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('booking-date').setAttribute('min', today);
     openModal(bookingModal);
@@ -597,23 +599,27 @@ document.querySelector('.logo').addEventListener('click', () => {
 });
 
 // Booking Form Logic
-const TICKET_PRICE = 150;
+const DEFAULT_TICKET_PRICE = 150;
+let currentUnitTicketPrice = DEFAULT_TICKET_PRICE;
 const ticketsInput = document.getElementById('booking-tickets');
 const priceDisplay = document.getElementById('booking-price');
 
 ticketsInput.addEventListener('input', (e) => {
-  const qty = e.target.value;
-  priceDisplay.textContent = '$' + (qty * TICKET_PRICE);
+  const qty = Math.max(1, parseInt(e.target.value, 10) || 1);
+  priceDisplay.textContent = '$' + (qty * currentUnitTicketPrice);
 });
 
 // Dynamic buttons functionality
 document.addEventListener('click', (e) => {
   if (e.target.closest('.discover')) {
-    const activePlace = data[order[0]] ? data[order[0]].place : 'Destination';
+    const activeItem = data[order[0]];
+    const activePlace = activeItem ? activeItem.place : 'Destination';
+    currentUnitTicketPrice = (activeItem && activeItem.basePrice) ? activeItem.basePrice : DEFAULT_TICKET_PRICE;
     document.getElementById('booking-dest-name').textContent = activePlace;
     
     document.getElementById('booking-form').reset();
-    priceDisplay.textContent = '$' + TICKET_PRICE;
+    document.getElementById('booking-tickets').value = 1;
+    priceDisplay.textContent = '$' + currentUnitTicketPrice;
     
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('booking-date').setAttribute('min', today);
