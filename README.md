@@ -36,8 +36,20 @@
    ```bash
    cd BOOK-TRIP
    ```
-3. **Open `index.html`:**
-   Simply open the `index.html` file in your preferred web browser. No complex build tools or local servers are required!
+3. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+4. **Start the full-stack server:**
+   ```bash
+   npm start
+   ```
+   The application will be live at `http://localhost:3000`.
+
+5. **Run automated tests:**
+   ```bash
+   npm test
+   ```
 
 ---
 *Created as a freelance booking platform project.*
