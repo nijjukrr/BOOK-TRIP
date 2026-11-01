@@ -379,7 +379,7 @@ function step(direction = "next") {
 async function loop() {
   await animate(".indicator", 0.5, { x: 0 });
   await animate(".indicator", 0.4, { x: window.innerWidth, delay: 0.3 });
-  set(".indicator", { x: -window.innerWidth });
+  gsap.set(".indicator", { x: -window.innerWidth });
   await step();
   loop();
 }
@@ -469,19 +469,6 @@ function generateGrid(items) {
     </div>
   `;
 }
-
-// Quick book function for grid cards
-window.openQuickBook = function(name, price) {
-  closeAllModals();
-  setTimeout(() => {
-    document.getElementById('booking-dest-name').textContent = name;
-    document.getElementById('booking-form').reset();
-    priceDisplay.textContent = '$' + price;
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('booking-date').setAttribute('min', today);
-    openModal(bookingModal);
-  }, 300);
-};
 
 // Nav links functionality
 document.querySelectorAll('.nav-links a').forEach(link => {
@@ -597,23 +584,39 @@ document.querySelector('.logo').addEventListener('click', () => {
 });
 
 // Booking Form Logic
-const TICKET_PRICE = 150;
+let currentTicketPrice = 150;
 const ticketsInput = document.getElementById('booking-tickets');
 const priceDisplay = document.getElementById('booking-price');
 
 ticketsInput.addEventListener('input', (e) => {
-  const qty = e.target.value;
-  priceDisplay.textContent = '$' + (qty * TICKET_PRICE);
+  const qty = Math.max(1, parseInt(e.target.value, 10) || 1);
+  priceDisplay.textContent = '$' + (qty * currentTicketPrice);
 });
+
+// Quick book function for grid cards
+window.openQuickBook = function(name, price) {
+  closeAllModals();
+  setTimeout(() => {
+    currentTicketPrice = Number(price) || 150;
+    document.getElementById('booking-dest-name').textContent = name;
+    document.getElementById('booking-form').reset();
+    priceDisplay.textContent = '$' + currentTicketPrice;
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('booking-date').setAttribute('min', today);
+    openModal(bookingModal);
+  }, 300);
+};
 
 // Dynamic buttons functionality
 document.addEventListener('click', (e) => {
   if (e.target.closest('.discover')) {
-    const activePlace = data[order[0]] ? data[order[0]].place : 'Destination';
+    const activeSlide = data[order[0]] || {};
+    const activePlace = activeSlide.place || 'Destination';
+    currentTicketPrice = Number(activeSlide.basePrice) || 150;
     document.getElementById('booking-dest-name').textContent = activePlace;
     
     document.getElementById('booking-form').reset();
-    priceDisplay.textContent = '$' + TICKET_PRICE;
+    priceDisplay.textContent = '$' + currentTicketPrice;
     
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('booking-date').setAttribute('min', today);
