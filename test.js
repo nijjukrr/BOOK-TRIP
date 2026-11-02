@@ -74,6 +74,14 @@ test('POST /api/bookings creates booking and GET /api/bookings/:id retrieves it'
   assert.strictEqual(getJson.booking.destination, 'Switzerland Alps');
 });
 
+test('GET /api/bookings/:id returns 404 for non-existent booking', async () => {
+  const res = await fetch(`${baseUrl}/api/bookings/BT99999999`);
+  assert.strictEqual(res.status, 404);
+  const json = await res.json();
+  assert.strictEqual(json.success, false);
+  assert.strictEqual(json.message, 'Booking not found.');
+});
+
 test('POST /api/bookings validates missing parameters', async () => {
   const res = await fetch(`${baseUrl}/api/bookings`, {
     method: 'POST',

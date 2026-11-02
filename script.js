@@ -379,7 +379,7 @@ function step(direction = "next") {
 async function loop() {
   await animate(".indicator", 0.5, { x: 0 });
   await animate(".indicator", 0.4, { x: window.innerWidth, delay: 0.3 });
-  set(".indicator", { x: -window.innerWidth });
+  gsap.set(".indicator", { x: -window.innerWidth });
   await step();
   loop();
 }
