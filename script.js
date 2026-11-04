@@ -379,7 +379,7 @@ function step(direction = "next") {
 async function loop() {
   await animate(".indicator", 0.5, { x: 0 });
   await animate(".indicator", 0.4, { x: window.innerWidth, delay: 0.3 });
-  set(".indicator", { x: -window.innerWidth });
+  gsap.set(".indicator", { x: -window.innerWidth });
   await step();
   loop();
 }
@@ -470,13 +470,17 @@ function generateGrid(items) {
   `;
 }
 
+let currentUnitPrice = 150;
+
 // Quick book function for grid cards
 window.openQuickBook = function(name, price) {
   closeAllModals();
   setTimeout(() => {
+    currentUnitPrice = Number(price) || 150;
     document.getElementById('booking-dest-name').textContent = name;
     document.getElementById('booking-form').reset();
-    priceDisplay.textContent = '$' + price;
+    document.getElementById('booking-tickets').value = 1;
+    priceDisplay.textContent = '$' + currentUnitPrice;
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('booking-date').setAttribute('min', today);
     openModal(bookingModal);
@@ -597,23 +601,25 @@ document.querySelector('.logo').addEventListener('click', () => {
 });
 
 // Booking Form Logic
-const TICKET_PRICE = 150;
 const ticketsInput = document.getElementById('booking-tickets');
 const priceDisplay = document.getElementById('booking-price');
 
 ticketsInput.addEventListener('input', (e) => {
-  const qty = e.target.value;
-  priceDisplay.textContent = '$' + (qty * TICKET_PRICE);
+  const qty = Math.max(1, parseInt(e.target.value, 10) || 1);
+  priceDisplay.textContent = '$' + (qty * currentUnitPrice);
 });
 
 // Dynamic buttons functionality
 document.addEventListener('click', (e) => {
   if (e.target.closest('.discover')) {
-    const activePlace = data[order[0]] ? data[order[0]].place : 'Destination';
+    const currentSlide = data[order[0]];
+    const activePlace = currentSlide ? currentSlide.place : 'Destination';
+    currentUnitPrice = (currentSlide && currentSlide.basePrice) ? currentSlide.basePrice : 150;
+
     document.getElementById('booking-dest-name').textContent = activePlace;
-    
     document.getElementById('booking-form').reset();
-    priceDisplay.textContent = '$' + TICKET_PRICE;
+    document.getElementById('booking-tickets').value = 1;
+    priceDisplay.textContent = '$' + currentUnitPrice;
     
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('booking-date').setAttribute('min', today);
@@ -684,5 +690,36 @@ document.getElementById('booking-form').addEventListener('submit', async (e) => 
 });
 
 document.getElementById('download-ticket').addEventListener('click', () => {
-  showToast('Downloading ticket...');
+  const ticketId = document.getElementById('ticket-id').textContent;
+  const ticketDest = document.getElementById('ticket-dest').textContent;
+  const ticketDate = document.getElementById('ticket-date').textContent;
+  const ticketQty = document.getElementById('ticket-qty').textContent;
+  const ticketName = document.getElementById('ticket-name').textContent;
+
+  const ticketContent = `
+========================================
+             BOOK TRIP TICKET
+========================================
+ Ticket ID:   ${ticketId}
+ Passenger:   ${ticketName}
+ Destination: ${ticketDest}
+ Date:        ${ticketDate}
+ Travelers:   ${ticketQty}
+========================================
+ Thank you for booking with Book Trip!
+ Keep this receipt for your records.
+========================================
+`.trim();
+
+  const blob = new Blob([ticketContent], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${ticketId.replace('#', '')}-ticket.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  showToast('Ticket downloaded successfully!');
 });

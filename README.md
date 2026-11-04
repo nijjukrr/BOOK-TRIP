@@ -36,8 +36,36 @@
    ```bash
    cd BOOK-TRIP
    ```
-3. **Open `index.html`:**
-   Simply open the `index.html` file in your preferred web browser. No complex build tools or local servers are required!
+3. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+4. **Start the Express backend and client:**
+   ```bash
+   npm start
+   ```
+   The application will be live at `http://localhost:3000`.
+
+5. **Run test suite:**
+   ```bash
+   npm test
+   ```
+
+---
+
+## 📡 Backend REST API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/health` | Health check endpoint |
+| `GET` | `/api/slides` | Fetch travel destinations for GSAP slider |
+| `GET` | `/api/destinations` | Fetch highlighted deals for destinations modal |
+| `GET` | `/api/tours` | Fetch curated tours for tours modal |
+| `GET` | `/api/bookings` | List all booked trips |
+| `POST` | `/api/bookings` | Submit new booking with passenger and ticket details |
+| `GET` | `/api/bookings/:id` | Retrieve booking details by booking ID |
+| `GET` | `/api/contact` | Retrieve customer contact inquiries |
+| `POST` | `/api/contact` | Submit contact message inquiry |
 
 ---
 *Created as a freelance booking platform project.*

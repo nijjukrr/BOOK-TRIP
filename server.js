@@ -84,6 +84,10 @@ const bookings = [];
 const contacts = [];
 
 // REST API Endpoints
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 app.get('/api/slides', (req, res) => {
   res.json({ success: true, data: slides });
 });
@@ -94,6 +98,10 @@ app.get('/api/destinations', (req, res) => {
 
 app.get('/api/tours', (req, res) => {
   res.json({ success: true, data: tours });
+});
+
+app.get('/api/bookings', (req, res) => {
+  res.json({ success: true, count: bookings.length, data: bookings });
 });
 
 app.post('/api/bookings', (req, res) => {
@@ -127,6 +135,10 @@ app.get('/api/bookings/:id', (req, res) => {
   res.json({ success: true, booking });
 });
 
+app.get('/api/contact', (req, res) => {
+  res.json({ success: true, count: contacts.length, data: contacts });
+});
+
 app.post('/api/contact', (req, res) => {
   const { name, email, message } = req.body;
   if (!name || !email || !message) {
@@ -143,6 +155,17 @@ app.post('/api/contact', (req, res) => {
 
   contacts.push(newContact);
   res.status(201).json({ success: true, message: 'Contact submission received.', contact: newContact });
+});
+
+// 404 handler for API routes
+app.all('/api/*', (req, res) => {
+  res.status(404).json({ success: false, message: 'API route not found.' });
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Unhandled server error:', err);
+  res.status(500).json({ success: false, message: 'Internal Server Error' });
 });
 
 if (require.main === module) {
