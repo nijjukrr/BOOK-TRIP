@@ -218,6 +218,18 @@ function init() {
       delay: startDelay,
     });
   });
+  // Update details with dynamic data from active slide
+  if (data[active]) {
+    const activeText = document.querySelector(`${detailsActive} .place-box .text`);
+    const activeT1 = document.querySelector(`${detailsActive} .title-1`);
+    const activeT2 = document.querySelector(`${detailsActive} .title-2`);
+    const activeDesc = document.querySelector(`${detailsActive} .desc`);
+    if (activeText) activeText.textContent = data[active].place || '';
+    if (activeT1) activeT1.textContent = data[active].title || '';
+    if (activeT2) activeT2.textContent = data[active].title2 || '';
+    if (activeDesc) activeDesc.textContent = data[active].description || '';
+  }
+
   gsap.to("#pagination", { y: 0, opacity: 1, ease, delay: startDelay });
   gsap.to("nav", { y: 0, opacity: 1, ease, delay: startDelay });
   gsap.to(detailsActive, { opacity: 1, x: 0, ease, delay: startDelay });
@@ -379,7 +391,7 @@ function step(direction = "next") {
 async function loop() {
   await animate(".indicator", 0.5, { x: 0 });
   await animate(".indicator", 0.4, { x: window.innerWidth, delay: 0.3 });
-  set(".indicator", { x: -window.innerWidth });
+  gsap.set(".indicator", { x: -window.innerWidth });
   await step();
   loop();
 }
@@ -469,19 +481,6 @@ function generateGrid(items) {
     </div>
   `;
 }
-
-// Quick book function for grid cards
-window.openQuickBook = function(name, price) {
-  closeAllModals();
-  setTimeout(() => {
-    document.getElementById('booking-dest-name').textContent = name;
-    document.getElementById('booking-form').reset();
-    priceDisplay.textContent = '$' + price;
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('booking-date').setAttribute('min', today);
-    openModal(bookingModal);
-  }, 300);
-};
 
 // Nav links functionality
 document.querySelectorAll('.nav-links a').forEach(link => {
@@ -597,23 +596,41 @@ document.querySelector('.logo').addEventListener('click', () => {
 });
 
 // Booking Form Logic
-const TICKET_PRICE = 150;
+let currentUnitPrice = 150;
 const ticketsInput = document.getElementById('booking-tickets');
 const priceDisplay = document.getElementById('booking-price');
 
-ticketsInput.addEventListener('input', (e) => {
-  const qty = e.target.value;
-  priceDisplay.textContent = '$' + (qty * TICKET_PRICE);
-});
+function updateBookingPrice() {
+  const qty = parseInt(ticketsInput.value, 10) || 1;
+  priceDisplay.textContent = '$' + (qty * currentUnitPrice);
+}
+
+ticketsInput.addEventListener('input', updateBookingPrice);
+
+// Quick book function for grid cards
+window.openQuickBook = function(name, price) {
+  closeAllModals();
+  setTimeout(() => {
+    currentUnitPrice = Number(price) || 150;
+    document.getElementById('booking-dest-name').textContent = name;
+    document.getElementById('booking-form').reset();
+    updateBookingPrice();
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('booking-date').setAttribute('min', today);
+    openModal(bookingModal);
+  }, 300);
+};
 
 // Dynamic buttons functionality
 document.addEventListener('click', (e) => {
   if (e.target.closest('.discover')) {
-    const activePlace = data[order[0]] ? data[order[0]].place : 'Destination';
+    const activeSlide = data[order[0]];
+    const activePlace = activeSlide ? activeSlide.place : 'Destination';
+    currentUnitPrice = (activeSlide && activeSlide.basePrice) ? activeSlide.basePrice : 150;
     document.getElementById('booking-dest-name').textContent = activePlace;
     
     document.getElementById('booking-form').reset();
-    priceDisplay.textContent = '$' + TICKET_PRICE;
+    updateBookingPrice();
     
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('booking-date').setAttribute('min', today);
@@ -676,6 +693,10 @@ document.getElementById('booking-form').addEventListener('submit', async (e) => 
   document.getElementById('ticket-date').textContent = date;
   document.getElementById('ticket-qty').textContent = qty;
   document.getElementById('ticket-name').textContent = name;
+  const ticketPriceEl = document.getElementById('ticket-price');
+  if (ticketPriceEl) {
+    ticketPriceEl.textContent = price;
+  }
   
   bookingModal.classList.remove('active');
   setTimeout(() => {
@@ -685,4 +706,33 @@ document.getElementById('booking-form').addEventListener('submit', async (e) => 
 
 document.getElementById('download-ticket').addEventListener('click', () => {
   showToast('Downloading ticket...');
+  const ticketId = document.getElementById('ticket-id').textContent;
+  const dest = document.getElementById('ticket-dest').textContent;
+  const date = document.getElementById('ticket-date').textContent;
+  const qty = document.getElementById('ticket-qty').textContent;
+  const name = document.getElementById('ticket-name').textContent;
+  const price = document.getElementById('ticket-price') ? document.getElementById('ticket-price').textContent : '';
+
+  const ticketContent = `========================================
+BOOK TRIP - TRAVEL CONFIRMATION
+========================================
+Ticket ID:   ${ticketId}
+Destination: ${dest}
+Travel Date: ${date}
+Travelers:   ${qty}
+Guest Name:  ${name}
+Total Paid:  ${price}
+========================================
+Thank you for booking with Book Trip!
+`;
+
+  const blob = new Blob([ticketContent], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ticket-${ticketId.replace('#', '')}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 });
