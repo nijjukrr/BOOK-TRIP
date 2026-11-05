@@ -84,6 +84,10 @@ const bookings = [];
 const contacts = [];
 
 // REST API Endpoints
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', uptime: process.uptime() });
+});
+
 app.get('/api/slides', (req, res) => {
   res.json({ success: true, data: slides });
 });
@@ -96,21 +100,30 @@ app.get('/api/tours', (req, res) => {
   res.json({ success: true, data: tours });
 });
 
+app.get('/api/bookings', (req, res) => {
+  res.status(200).json({ success: true, count: bookings.length, data: bookings });
+});
+
 app.post('/api/bookings', (req, res) => {
   const { destination, date, tickets, name, email, phone, price } = req.body;
   if (!destination || !date || !tickets || !name || !email) {
     return res.status(400).json({ success: false, message: 'Missing required booking fields.' });
   }
 
+  const ticketCount = Number(tickets);
+  if (isNaN(ticketCount) || ticketCount <= 0) {
+    return res.status(400).json({ success: false, message: 'Tickets count must be a positive number.' });
+  }
+
   const bookingId = 'BT' + Math.floor(100000 + Math.random() * 900000);
   const newBooking = {
     id: bookingId,
-    destination,
-    date,
-    tickets: Number(tickets),
-    name,
-    email,
-    phone: phone || '',
+    destination: String(destination).trim(),
+    date: String(date).trim(),
+    tickets: ticketCount,
+    name: String(name).trim(),
+    email: String(email).trim(),
+    phone: phone ? String(phone).trim() : '',
     totalPrice: price,
     createdAt: new Date().toISOString()
   };
@@ -127,17 +140,21 @@ app.get('/api/bookings/:id', (req, res) => {
   res.json({ success: true, booking });
 });
 
+app.get('/api/contact', (req, res) => {
+  res.status(200).json({ success: true, count: contacts.length, data: contacts });
+});
+
 app.post('/api/contact', (req, res) => {
   const { name, email, message } = req.body;
-  if (!name || !email || !message) {
+  if (!name || !email || !message || !String(name).trim() || !String(email).trim() || !String(message).trim()) {
     return res.status(400).json({ success: false, message: 'Name, email, and message are required.' });
   }
 
   const newContact = {
     id: 'C' + Date.now(),
-    name,
-    email,
-    message,
+    name: String(name).trim(),
+    email: String(email).trim(),
+    message: String(message).trim(),
     createdAt: new Date().toISOString()
   };
 

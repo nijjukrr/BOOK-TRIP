@@ -17,6 +17,14 @@ test.after((t, done) => {
   server.close(done);
 });
 
+test('GET /api/health returns ok status', async () => {
+  const res = await fetch(`${baseUrl}/api/health`);
+  assert.strictEqual(res.status, 200);
+  const data = await res.json();
+  assert.strictEqual(data.status, 'ok');
+  assert.ok(typeof data.uptime === 'number');
+});
+
 test('GET /api/slides returns slides data', async () => {
   const res = await fetch(`${baseUrl}/api/slides`);
   assert.strictEqual(res.status, 200);
@@ -86,6 +94,40 @@ test('POST /api/bookings validates missing parameters', async () => {
   assert.strictEqual(json.success, false);
 });
 
+test('POST /api/bookings validates invalid tickets count', async () => {
+  const res = await fetch(`${baseUrl}/api/bookings`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      destination: 'Switzerland Alps',
+      date: '2025-06-15',
+      tickets: 0,
+      name: 'Alice Smith',
+      email: 'alice@example.com'
+    })
+  });
+
+  assert.strictEqual(res.status, 400);
+  const json = await res.json();
+  assert.strictEqual(json.success, false);
+});
+
+test('GET /api/bookings lists bookings', async () => {
+  const res = await fetch(`${baseUrl}/api/bookings`);
+  assert.strictEqual(res.status, 200);
+  const data = await res.json();
+  assert.strictEqual(data.success, true);
+  assert.ok(Array.isArray(data.data));
+  assert.ok(data.count >= 1);
+});
+
+test('GET /api/bookings/:id returns 404 for non-existent booking', async () => {
+  const res = await fetch(`${baseUrl}/api/bookings/NON_EXISTENT_ID`);
+  assert.strictEqual(res.status, 404);
+  const json = await res.json();
+  assert.strictEqual(json.success, false);
+});
+
 test('POST /api/contact records contact message', async () => {
   const contactData = {
     name: 'Bob Johnson',
@@ -104,6 +146,27 @@ test('POST /api/contact records contact message', async () => {
   assert.strictEqual(json.success, true);
   assert.ok(json.contact.id);
   assert.strictEqual(json.contact.name, 'Bob Johnson');
+});
+
+test('POST /api/contact validates missing fields', async () => {
+  const res = await fetch(`${baseUrl}/api/contact`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: 'Bob' })
+  });
+
+  assert.strictEqual(res.status, 400);
+  const json = await res.json();
+  assert.strictEqual(json.success, false);
+});
+
+test('GET /api/contact lists contact submissions', async () => {
+  const res = await fetch(`${baseUrl}/api/contact`);
+  assert.strictEqual(res.status, 200);
+  const data = await res.json();
+  assert.strictEqual(data.success, true);
+  assert.ok(Array.isArray(data.data));
+  assert.ok(data.count >= 1);
 });
 
 test('Static files serving (index.html)', async () => {
