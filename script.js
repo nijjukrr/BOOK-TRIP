@@ -379,7 +379,7 @@ function step(direction = "next") {
 async function loop() {
   await animate(".indicator", 0.5, { x: 0 });
   await animate(".indicator", 0.4, { x: window.innerWidth, delay: 0.3 });
-  set(".indicator", { x: -window.innerWidth });
+  gsap.set(".indicator", { x: -window.innerWidth });
   await step();
   loop();
 }
@@ -474,9 +474,10 @@ function generateGrid(items) {
 window.openQuickBook = function(name, price) {
   closeAllModals();
   setTimeout(() => {
+    currentUnitPrice = Number(price) || 150;
     document.getElementById('booking-dest-name').textContent = name;
     document.getElementById('booking-form').reset();
-    priceDisplay.textContent = '$' + price;
+    updateBookingPrice();
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('booking-date').setAttribute('min', today);
     openModal(bookingModal);
@@ -597,23 +598,28 @@ document.querySelector('.logo').addEventListener('click', () => {
 });
 
 // Booking Form Logic
-const TICKET_PRICE = 150;
+let currentUnitPrice = 150;
 const ticketsInput = document.getElementById('booking-tickets');
 const priceDisplay = document.getElementById('booking-price');
 
-ticketsInput.addEventListener('input', (e) => {
-  const qty = e.target.value;
-  priceDisplay.textContent = '$' + (qty * TICKET_PRICE);
+function updateBookingPrice() {
+  const qty = parseInt(ticketsInput.value, 10) || 1;
+  priceDisplay.textContent = '$' + (qty * currentUnitPrice);
+}
+
+ticketsInput.addEventListener('input', () => {
+  updateBookingPrice();
 });
 
 // Dynamic buttons functionality
 document.addEventListener('click', (e) => {
   if (e.target.closest('.discover')) {
     const activePlace = data[order[0]] ? data[order[0]].place : 'Destination';
+    currentUnitPrice = data[order[0]] && data[order[0]].basePrice ? data[order[0]].basePrice : 150;
     document.getElementById('booking-dest-name').textContent = activePlace;
     
     document.getElementById('booking-form').reset();
-    priceDisplay.textContent = '$' + TICKET_PRICE;
+    updateBookingPrice();
     
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('booking-date').setAttribute('min', today);
