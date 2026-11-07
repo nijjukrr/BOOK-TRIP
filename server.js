@@ -84,6 +84,10 @@ const bookings = [];
 const contacts = [];
 
 // REST API Endpoints
+app.get('/api/health', (req, res) => {
+  res.json({ success: true, status: 'ok', timestamp: new Date().toISOString() });
+});
+
 app.get('/api/slides', (req, res) => {
   res.json({ success: true, data: slides });
 });
