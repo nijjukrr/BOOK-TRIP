@@ -83,7 +83,13 @@ const tours = [
 const bookings = [];
 const contacts = [];
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 // REST API Endpoints
+app.get('/api/health', (req, res) => {
+  res.json({ success: true, status: 'ok', uptime: process.uptime() });
+});
+
 app.get('/api/slides', (req, res) => {
   res.json({ success: true, data: slides });
 });
@@ -96,10 +102,23 @@ app.get('/api/tours', (req, res) => {
   res.json({ success: true, data: tours });
 });
 
+app.get('/api/bookings', (req, res) => {
+  res.json({ success: true, count: bookings.length, data: bookings });
+});
+
 app.post('/api/bookings', (req, res) => {
   const { destination, date, tickets, name, email, phone, price } = req.body;
-  if (!destination || !date || !tickets || !name || !email) {
+  if (!destination || !date || tickets === undefined || tickets === null || tickets === '' || !name || !email) {
     return res.status(400).json({ success: false, message: 'Missing required booking fields.' });
+  }
+
+  const numTickets = Number(tickets);
+  if (isNaN(numTickets) || numTickets <= 0) {
+    return res.status(400).json({ success: false, message: 'Tickets must be a positive number.' });
+  }
+
+  if (!EMAIL_REGEX.test(email)) {
+    return res.status(400).json({ success: false, message: 'Invalid email address format.' });
   }
 
   const bookingId = 'BT' + Math.floor(100000 + Math.random() * 900000);
@@ -131,6 +150,10 @@ app.post('/api/contact', (req, res) => {
   const { name, email, message } = req.body;
   if (!name || !email || !message) {
     return res.status(400).json({ success: false, message: 'Name, email, and message are required.' });
+  }
+
+  if (!EMAIL_REGEX.test(email)) {
+    return res.status(400).json({ success: false, message: 'Invalid email address format.' });
   }
 
   const newContact = {
