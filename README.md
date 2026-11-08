@@ -26,18 +26,38 @@
 - **GSAP (GreenSock):** Advanced timeline and robust physics-based animations for the interactive card slider.
 - **Vercel:** Deployed seamlessly for fast, secure global access.
 
+## 🔌 Backend REST API Endpoints
+
+- `GET /api/health`: Server health status, uptime, and state.
+- `GET /api/slides`: Interactive slide cards with base pricing and scenery details.
+- `GET /api/destinations`: Curated top destinations with active discounts.
+- `GET /api/tours`: Tour packages and deal offerings.
+- `GET /api/bookings`: Retrieve list of all confirmed bookings.
+- `GET /api/bookings/:id`: Retrieve single booking by reservation ID.
+- `POST /api/bookings`: Create and confirm a travel reservation with validation.
+- `POST /api/contact`: Send a contact and inquiry message.
+
 ## 🚀 Running Locally
 
 1. **Clone the repository:**
    ```bash
    git clone https://github.com/nijjukrr/BOOK-TRIP.git
-   ```
-2. **Navigate to the directory:**
-   ```bash
    cd BOOK-TRIP
    ```
-3. **Open `index.html`:**
-   Simply open the `index.html` file in your preferred web browser. No complex build tools or local servers are required!
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+3. **Start the application server:**
+   ```bash
+   npm start
+   ```
+   Open `http://localhost:3000` in your web browser.
+
+4. **Run tests:**
+   ```bash
+   npm test
+   ```
 
 ---
 *Created as a freelance booking platform project.*

@@ -4,42 +4,48 @@ let data = [
         title:'SAINT',
         title2:'ANTONIEN',
         description:'Tucked away in the Switzerland Alps, Saint Antönien offers an idyllic retreat for those seeking tranquility and adventure alike. It\'s a hidden gem for backcountry skiing in winter and boasts lush trails for hiking and mountain biking during the warmer months.',
-        image:'https://assets.codepen.io/3685267/timed-cards-1.jpg'
+        image:'https://assets.codepen.io/3685267/timed-cards-1.jpg',
+        basePrice: 150
     },
     {
         place:'Japan Alps',
         title:'NANGANO',
         title2:'PREFECTURE',
         description:'Nagano Prefecture, set within the majestic Japan Alps, is a cultural treasure trove with its historic shrines and temples, particularly the famous Zenkō-ji. The region is also a hotspot for skiing and snowboarding, offering some of the country\'s best powder.',
-        image:'https://assets.codepen.io/3685267/timed-cards-2.jpg'
+        image:'https://assets.codepen.io/3685267/timed-cards-2.jpg',
+        basePrice: 180
     },
     {
         place:'Sahara Desert - Morocco',
         title:'MARRAKECH',
         title2:'MEROUGA',
         description:'The journey from the vibrant souks and palaces of Marrakech to the tranquil, starlit sands of Merzouga showcases the diverse splendor of Morocco. Camel treks and desert camps offer an unforgettable immersion into the nomadic way of life.',
-        image:'https://assets.codepen.io/3685267/timed-cards-3.jpg'
+        image:'https://assets.codepen.io/3685267/timed-cards-3.jpg',
+        basePrice: 200
     },
     {
         place:'Sierra Nevada - USA',
         title:'YOSEMITE',
         title2:'NATIONAL PARAK',
         description:'Yosemite National Park is a showcase of the American wilderness, revered for its towering granite monoliths, ancient giant sequoias, and thundering waterfalls. The park offers year-round recreational activities, from rock climbing to serene valley walks.',
-        image:'https://assets.codepen.io/3685267/timed-cards-4.jpg'
+        image:'https://assets.codepen.io/3685267/timed-cards-4.jpg',
+        basePrice: 120
     },
     {
         place:'Tarifa - Spain',
         title:'LOS LANCES',
         title2:'BEACH',
         description:'Los Lances Beach in Tarifa is a coastal paradise known for its consistent winds, making it a world-renowned spot for kitesurfing and windsurfing. The beach\'s long, sandy shores provide ample space for relaxation and sunbathing, with a vibrant atmosphere of beach bars and cafes.',
-        image:'https://assets.codepen.io/3685267/timed-cards-5.jpg'
+        image:'https://assets.codepen.io/3685267/timed-cards-5.jpg',
+        basePrice: 100
     },
     {
         place:'Cappadocia - Turkey',
         title:'Göreme',
         title2:'Valley',
         description:'Göreme Valley in Cappadocia is a historical marvel set against a unique geological backdrop, where centuries of wind and water have sculpted the landscape into whimsical formations. The valley is also famous for its open-air museums, underground cities, and the enchanting experience of hot air ballooning.',
-        image:'https://assets.codepen.io/3685267/timed-cards-6.jpg'
+        image:'https://assets.codepen.io/3685267/timed-cards-6.jpg',
+        basePrice: 140
     },
 ];
 
@@ -470,13 +476,18 @@ function generateGrid(items) {
   `;
 }
 
+// Dynamic ticket unit price state
+let currentUnitPrice = 150;
+
 // Quick book function for grid cards
 window.openQuickBook = function(name, price) {
   closeAllModals();
   setTimeout(() => {
+    currentUnitPrice = Number(price) || 150;
     document.getElementById('booking-dest-name').textContent = name;
     document.getElementById('booking-form').reset();
-    priceDisplay.textContent = '$' + price;
+    const qty = Number(ticketsInput.value) || 1;
+    priceDisplay.textContent = '$' + (qty * currentUnitPrice);
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('booking-date').setAttribute('min', today);
     openModal(bookingModal);
@@ -597,23 +608,24 @@ document.querySelector('.logo').addEventListener('click', () => {
 });
 
 // Booking Form Logic
-const TICKET_PRICE = 150;
 const ticketsInput = document.getElementById('booking-tickets');
 const priceDisplay = document.getElementById('booking-price');
 
 ticketsInput.addEventListener('input', (e) => {
-  const qty = e.target.value;
-  priceDisplay.textContent = '$' + (qty * TICKET_PRICE);
+  const qty = Number(e.target.value) || 1;
+  priceDisplay.textContent = '$' + (qty * currentUnitPrice);
 });
 
 // Dynamic buttons functionality
 document.addEventListener('click', (e) => {
   if (e.target.closest('.discover')) {
     const activePlace = data[order[0]] ? data[order[0]].place : 'Destination';
+    currentUnitPrice = (data[order[0]] && data[order[0]].basePrice) ? data[order[0]].basePrice : 150;
     document.getElementById('booking-dest-name').textContent = activePlace;
     
     document.getElementById('booking-form').reset();
-    priceDisplay.textContent = '$' + TICKET_PRICE;
+    const qty = Number(ticketsInput.value) || 1;
+    priceDisplay.textContent = '$' + (qty * currentUnitPrice);
     
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('booking-date').setAttribute('min', today);
@@ -663,11 +675,15 @@ document.getElementById('booking-form').addEventListener('submit', async (e) => 
       })
     });
     const result = await response.json();
-    if (result.success && result.booking) {
+    if (!response.ok || !result.success) {
+      showToast(result.message || 'Booking submission failed. Please verify details.');
+      return;
+    }
+    if (result.booking) {
       ticketId = '#' + result.booking.id;
     }
   } catch (err) {
-    console.warn('Booking API submit error, using local ticket fallback', err);
+    console.warn('Booking API submit network error, continuing with fallback ticket', err);
   }
   
   // Populate Ticket
@@ -684,5 +700,35 @@ document.getElementById('booking-form').addEventListener('submit', async (e) => 
 });
 
 document.getElementById('download-ticket').addEventListener('click', () => {
-  showToast('Downloading ticket...');
+  const ticketId = document.getElementById('ticket-id').textContent;
+  const dest = document.getElementById('ticket-dest').textContent;
+  const date = document.getElementById('ticket-date').textContent;
+  const qty = document.getElementById('ticket-qty').textContent;
+  const name = document.getElementById('ticket-name').textContent;
+
+  const ticketContent = `========================================
+        BOOK TRIP - BOARDING PASS
+========================================
+Confirmation ID : ${ticketId}
+Traveler Name   : ${name}
+Destination     : ${dest}
+Departure Date  : ${date}
+Total Tickets   : ${qty}
+Status          : Confirmed
+========================================
+Thank you for choosing Book Trip!
+Enjoy your journey!
+========================================`;
+
+  const blob = new Blob([ticketContent], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const downloadLink = document.createElement('a');
+  downloadLink.href = url;
+  downloadLink.download = `ticket-${ticketId.replace('#', '')}.txt`;
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  document.body.removeChild(downloadLink);
+  URL.revokeObjectURL(url);
+
+  showToast('Ticket downloaded successfully!');
 });

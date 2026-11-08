@@ -17,6 +17,15 @@ test.after((t, done) => {
   server.close(done);
 });
 
+test('GET /api/health returns server health and uptime', async () => {
+  const res = await fetch(`${baseUrl}/api/health`);
+  assert.strictEqual(res.status, 200);
+  const data = await res.json();
+  assert.strictEqual(data.success, true);
+  assert.strictEqual(data.status, 'ok');
+  assert.ok(typeof data.uptime === 'number');
+});
+
 test('GET /api/slides returns slides data', async () => {
   const res = await fetch(`${baseUrl}/api/slides`);
   assert.strictEqual(res.status, 200);
@@ -74,6 +83,15 @@ test('POST /api/bookings creates booking and GET /api/bookings/:id retrieves it'
   assert.strictEqual(getJson.booking.destination, 'Switzerland Alps');
 });
 
+test('GET /api/bookings returns all bookings array', async () => {
+  const res = await fetch(`${baseUrl}/api/bookings`);
+  assert.strictEqual(res.status, 200);
+  const data = await res.json();
+  assert.strictEqual(data.success, true);
+  assert.ok(Array.isArray(data.data));
+  assert.ok(typeof data.count === 'number');
+});
+
 test('POST /api/bookings validates missing parameters', async () => {
   const res = await fetch(`${baseUrl}/api/bookings`, {
     method: 'POST',
@@ -84,6 +102,63 @@ test('POST /api/bookings validates missing parameters', async () => {
   assert.strictEqual(res.status, 400);
   const json = await res.json();
   assert.strictEqual(json.success, false);
+});
+
+test('POST /api/bookings rejects non-positive tickets count', async () => {
+  const res = await fetch(`${baseUrl}/api/bookings`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      destination: 'Switzerland Alps',
+      date: '2025-06-15',
+      tickets: 0,
+      name: 'Test Zero',
+      email: 'test@example.com',
+      price: '$0'
+    })
+  });
+
+  assert.strictEqual(res.status, 400);
+  const json = await res.json();
+  assert.strictEqual(json.success, false);
+  assert.strictEqual(json.message, 'Tickets must be a positive number.');
+});
+
+test('POST /api/bookings rejects invalid email format', async () => {
+  const res = await fetch(`${baseUrl}/api/bookings`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      destination: 'Switzerland Alps',
+      date: '2025-06-15',
+      tickets: 2,
+      name: 'Invalid Email',
+      email: 'not-an-email',
+      price: '$300'
+    })
+  });
+
+  assert.strictEqual(res.status, 400);
+  const json = await res.json();
+  assert.strictEqual(json.success, false);
+  assert.strictEqual(json.message, 'Invalid email address format.');
+});
+
+test('POST /api/contact rejects invalid email format', async () => {
+  const res = await fetch(`${baseUrl}/api/contact`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: 'Invalid Email Contact',
+      email: 'bad-email-address',
+      message: 'Hello there'
+    })
+  });
+
+  assert.strictEqual(res.status, 400);
+  const json = await res.json();
+  assert.strictEqual(json.success, false);
+  assert.strictEqual(json.message, 'Invalid email address format.');
 });
 
 test('POST /api/contact records contact message', async () => {
