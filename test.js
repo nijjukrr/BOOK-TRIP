@@ -17,6 +17,15 @@ test.after((t, done) => {
   server.close(done);
 });
 
+test('GET /api/health returns health status', async () => {
+  const res = await fetch(`${baseUrl}/api/health`);
+  assert.strictEqual(res.status, 200);
+  const data = await res.json();
+  assert.strictEqual(data.success, true);
+  assert.strictEqual(data.status, 'ok');
+  assert.ok(data.timestamp);
+});
+
 test('GET /api/slides returns slides data', async () => {
   const res = await fetch(`${baseUrl}/api/slides`);
   assert.strictEqual(res.status, 200);
